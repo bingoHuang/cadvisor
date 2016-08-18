@@ -249,15 +249,31 @@ func newDockerContainerHandler(
 		}
 	}
 
-	// split env vars to get metadata map.
+	// get env vars if set '--docker-env-metadata-whitelist=ALL' --start by bingo 2016.08.17
+	isAll := false
 	for _, exposedEnv := range metadataEnvs {
+		if strings.ToLower(exposedEnv) == "all" {
+			isAll = true
+		}
+	}
+
+	if isAll {
 		for _, envVar := range ctnr.Config.Env {
 			splits := strings.SplitN(envVar, "=", 2)
-			if splits[0] == exposedEnv {
-				handler.envs[strings.ToLower(exposedEnv)] = splits[1]
+			handler.envs[strings.ToLower(splits[0])] = splits[1]
+		}
+	} else {
+		// split env vars to get metadata map.
+		for _, exposedEnv := range metadataEnvs {
+			for _, envVar := range ctnr.Config.Env {
+				splits := strings.SplitN(envVar, "=", 2)
+				if splits[0] == exposedEnv {
+					handler.envs[strings.ToLower(exposedEnv)] = splits[1]
+				}
 			}
 		}
 	}
+	// --end by bingo
 
 	return handler, nil
 }
